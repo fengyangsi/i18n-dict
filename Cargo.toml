@@ -9,6 +9,7 @@ resolver = "3"
 edition = "2024"
 version = "0.1.0"
 license = "MIT"
+repository = "https://github.com/fengyangsi/i18n-dict"
 
 [workspace.dependencies]
 serde = "1.0.229"

@@ -3,6 +3,11 @@ name = "i18n-dict"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+description = "编译期键抽象的词典库:DictKey 键名抽象 + Dict 词条容器 trait,按键直接寻址零查找"
+keywords = ["i18n", "dictionary", "localization", "internationalization"]
+categories = ["internationalization"]
+readme = "../README.md"
 
 [dependencies]
 i18n-dict-macros = { workspace = true, optional = true }
