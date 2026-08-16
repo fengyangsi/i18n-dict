@@ -1,0 +1,19 @@
+[workspace]
+members = [
+    "i18n-dict",
+    "i18n-dict-macros"
+]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+license = "MIT"
+
+[workspace.dependencies]
+serde = "1.0.229"
+serde_json = "1"
+i18n-dict-macros = { path = "i18n-dict-macros", version = "0.1.0" }
+proc-macro2 = { version = "1.0.74", default-features = false }
+quote = { version = "1.0.35", default-features = false }
+syn = { version = "3", default-features = false }

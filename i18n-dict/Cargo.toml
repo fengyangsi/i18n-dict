@@ -1,0 +1,16 @@
+[package]
+name = "i18n-dict"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+i18n-dict-macros = { workspace = true, optional = true }
+
+[features]
+macros = ["dep:i18n-dict-macros"]
+
+[dev-dependencies]
+i18n-dict = { path = ".", features = ["macros"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
