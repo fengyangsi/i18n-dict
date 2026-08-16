@@ -37,8 +37,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::{
-    parse_macro_input, punctuated::Punctuated, Data, DeriveInput, Fields,
-    Ident, Path, Token,
+    Data, DeriveInput, Fields, Ident, Path, Token, parse_macro_input, punctuated::Punctuated,
 };
 
 /// 二分查找阈值:变体数量超过此值时线性查找变慢,
@@ -496,19 +495,17 @@ impl Parse for SubsetInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let list = Punctuated::<Path, Token![,]>::parse_terminated(input)?;
         let mut it = list.into_iter();
-        let dict = it
-            .next()
-            .ok_or_else(|| input.error("缺少 dict enum 名"))?;
-        let name = it
-            .next()
-            .ok_or_else(|| input.error("缺少子集类型名"))?;
+        let dict = it.next().ok_or_else(|| input.error("缺少 dict enum 名"))?;
+        let name = it.next().ok_or_else(|| input.error("缺少子集类型名"))?;
         let keys: Vec<Path> = it.collect();
-        let dict = dict.get_ident().cloned().ok_or_else(|| {
-            syn::Error::new_spanned(&dict, "dict enum 名应为简单标识符")
-        })?;
-        let name = name.get_ident().cloned().ok_or_else(|| {
-            syn::Error::new_spanned(&name, "子集类型名应为简单标识符")
-        })?;
+        let dict = dict
+            .get_ident()
+            .cloned()
+            .ok_or_else(|| syn::Error::new_spanned(&dict, "dict enum 名应为简单标识符"))?;
+        let name = name
+            .get_ident()
+            .cloned()
+            .ok_or_else(|| syn::Error::new_spanned(&name, "子集类型名应为简单标识符"))?;
         Ok(SubsetInput { dict, name, keys })
     }
 }

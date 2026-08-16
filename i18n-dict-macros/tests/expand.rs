@@ -7,7 +7,7 @@
 //! - 大 enum(> 16)的二分路径
 
 use i18n_dict::DictKey as _; // trait 匿名导入(方法解析用;trait 名与 derive 宏同名,故不用具名导入)
-use i18n_dict_macros::{dictkey, DictKey, DictKeyDeserialize, subset};
+use i18n_dict_macros::{DictKey, DictKeyDeserialize, dictkey, subset};
 
 // ---------------------------------------------------------------------------
 // 形态 B:#[derive(DictKey)] 保留声明顺序
@@ -45,10 +45,7 @@ fn derive_small_table_still_has_sorted_tables() {
 #[test]
 fn derive_find_uses_trait_interface() {
     // derive 形态小表:find = trait 默认线性实现,返回变体值
-    assert_eq!(
-        dict_key::find("welcome_body"),
-        Some(dict_key::welcome_body)
-    );
+    assert_eq!(dict_key::find("welcome_body"), Some(dict_key::welcome_body));
     assert_eq!(dict_key::find("footer"), Some(dict_key::footer));
     assert_eq!(dict_key::find("unknown"), None);
 }
@@ -82,7 +79,10 @@ fn dictkey_sorts_variants() {
     // 声明顺序 welcome_title, welcome_body, footer
     // 展开后    footer, welcome_body, welcome_title(判别值 = 字母序位置)
     assert_eq!(sorted_key::COUNT, 3);
-    assert_eq!(sorted_key::KEYS, &["footer", "welcome_body", "welcome_title"]);
+    assert_eq!(
+        sorted_key::KEYS,
+        &["footer", "welcome_body", "welcome_title"]
+    );
     assert_eq!(sorted_key::VARIANTS[0], sorted_key::footer);
     assert_eq!(sorted_key::footer as usize, 0);
     assert_eq!(sorted_key::welcome_body as usize, 1);
@@ -127,8 +127,14 @@ fn dictkey_sort_discriminants_depend_only_on_key_set() {
         welcome_body,
     }
     assert_eq!(shuffled::footer as usize, sorted_key::footer as usize);
-    assert_eq!(shuffled::welcome_body as usize, sorted_key::welcome_body as usize);
-    assert_eq!(shuffled::welcome_title as usize, sorted_key::welcome_title as usize);
+    assert_eq!(
+        shuffled::welcome_body as usize,
+        sorted_key::welcome_body as usize
+    );
+    assert_eq!(
+        shuffled::welcome_title as usize,
+        sorted_key::welcome_title as usize
+    );
     assert_eq!(shuffled::KEYS, sorted_key::KEYS);
 }
 
@@ -141,8 +147,26 @@ fn dictkey_sort_discriminants_depend_only_on_key_set() {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum big_key {
     // 声明顺序故意打乱
-    k19, k15, k00, k04, k11, k07, k03, k16, k12, k08,
-    k01, k17, k05, k13, k09, k02, k18, k06, k14, k10,
+    k19,
+    k15,
+    k00,
+    k04,
+    k11,
+    k07,
+    k03,
+    k16,
+    k12,
+    k08,
+    k01,
+    k17,
+    k05,
+    k13,
+    k09,
+    k02,
+    k18,
+    k06,
+    k14,
+    k10,
 }
 
 #[test]
@@ -186,8 +210,26 @@ fn big_enum_deserialize() {
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, DictKey, DictKeyDeserialize)]
 enum big_derive {
-    k19, k15, k00, k04, k11, k07, k03, k16, k12, k08,
-    k01, k17, k05, k13, k09, k02, k18, k06, k14, k10,
+    k19,
+    k15,
+    k00,
+    k04,
+    k11,
+    k07,
+    k03,
+    k16,
+    k12,
+    k08,
+    k01,
+    k17,
+    k05,
+    k13,
+    k09,
+    k02,
+    k18,
+    k06,
+    k14,
+    k10,
 }
 
 #[test]
@@ -217,7 +259,12 @@ fn big_derive_deserialize_via_find() {
 // subset!:路径语法 / 裸 ident / trait 断言
 // ---------------------------------------------------------------------------
 
-subset!(sorted_key, settings_subset, sorted_key::footer, sorted_key::welcome_title);
+subset!(
+    sorted_key,
+    settings_subset,
+    sorted_key::footer,
+    sorted_key::welcome_title
+);
 
 #[test]
 fn subset_indexes_are_dictkey_discriminants() {
@@ -311,8 +358,26 @@ fn dictkey_keeps_declaration_order_by_default() {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum big_sorted {
     // 声明顺序故意打乱
-    k19, k15, k00, k04, k11, k07, k03, k16, k12, k08,
-    k01, k17, k05, k13, k09, k02, k18, k06, k14, k10,
+    k19,
+    k15,
+    k00,
+    k04,
+    k11,
+    k07,
+    k03,
+    k16,
+    k12,
+    k08,
+    k01,
+    k17,
+    k05,
+    k13,
+    k09,
+    k02,
+    k18,
+    k06,
+    k14,
+    k10,
 }
 
 #[test]

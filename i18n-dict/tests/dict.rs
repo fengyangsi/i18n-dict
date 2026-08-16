@@ -2,7 +2,7 @@
 //! 与真实用户 `i18n-dict = { features = ["macros"] }` 的用法一致。
 
 use i18n_dict::DictKey as _; // trait 匿名导入(find 方法解析用)
-use i18n_dict::{dictkey, subset, Dict};
+use i18n_dict::{Dict, dictkey, subset};
 
 #[dictkey(deserialize)]
 #[repr(usize)]
@@ -14,7 +14,12 @@ enum DictKey {
     footer,
 }
 
-subset!(DictKey, settings_subset, DictKey::welcome_body, DictKey::footer);
+subset!(
+    DictKey,
+    settings_subset,
+    DictKey::welcome_body,
+    DictKey::footer
+);
 
 #[test]
 fn end_to_end() {
@@ -80,7 +85,10 @@ subset!(
 fn end_to_end_sort_mode() {
     // sort 模式:判别值 = 字母序位置(footer=0, welcome_body=1, welcome_title=2)
     assert_eq!(SortedKey::COUNT, 3);
-    assert_eq!(SortedKey::KEYS, &["footer", "welcome_body", "welcome_title"]);
+    assert_eq!(
+        SortedKey::KEYS,
+        &["footer", "welcome_body", "welcome_title"]
+    );
     assert_eq!(SortedKey::footer as usize, 0);
     assert_eq!(SortedKey::welcome_body as usize, 1);
     assert_eq!(SortedKey::welcome_title as usize, 2);
