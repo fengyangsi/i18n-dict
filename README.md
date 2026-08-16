@@ -1,5 +1,7 @@
 # i18n-dict
 
+Compile-time key abstraction for Rust i18n dictionaries: key names are mapped to enum variants at compile time, entries are addressed by key directly — zero lookup, zero runtime overhead.
+
 编译期键抽象的 Rust 词典库:键名 → 变体值的映射在编译期完成,词条容器按键直接寻址,零查找、零运行时开销。
 
 ## 特性
