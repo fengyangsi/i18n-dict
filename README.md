@@ -4,7 +4,7 @@
 [![docs.rs](https://docs.rs/i18n-dict/badge.svg)](https://docs.rs/i18n-dict)
 [![CI](https://github.com/fengyangsi/i18n-dict/actions/workflows/ci.yml/badge.svg)](https://github.com/fengyangsi/i18n-dict/actions/workflows/ci.yml)
 [![Coverage](https://coveralls.io/repos/github/fengyangsi/i18n-dict/badge.svg?branch=master)](https://coveralls.io/github/fengyangsi/i18n-dict)
-[![License](https://img.shields.io/github/license/fengyangsi/i18n-dict)](LICENSE)
+[![License](https://img.shields.io/crates/l/i18n-dict)](LICENSE-MIT)
 
 Compile-time key abstraction for Rust i18n dictionaries: key names are mapped to enum variants at compile time, entries are addressed by key directly — zero lookup, zero runtime overhead.
 
