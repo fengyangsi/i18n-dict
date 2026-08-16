@@ -92,6 +92,6 @@ assert_eq!(dict.get(key), "Hello");
 
 ## License / 许可证
 
-Dual-licensed under [MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE), at your option. See [LICENSE](LICENSE) for the summary.
+Dual-licensed under [MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE), at your option.
 
-双许可:[MIT](LICENSE-MIT) 或 [Apache-2.0](LICENSE-APACHE),使用者任选其一,见 [LICENSE](LICENSE) 汇总说明。
+双许可:[MIT](LICENSE-MIT) 或 [Apache-2.0](LICENSE-APACHE),使用者任选其一。
