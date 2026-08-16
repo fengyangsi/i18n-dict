@@ -1,0 +1,7 @@
+error: unexpected end of input, 缺少 dict enum 名
+ --> tests/ui/subset_missing_arguments.rs:3:1
+  |
+3 | subset!();
+  | ^^^^^^^^^
+  |
+  = note: this error originates in the macro `subset` (in Nightly builds, run with -Z macro-backtrace for more info)

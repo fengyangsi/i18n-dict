@@ -19,5 +19,6 @@ syn = { workspace = true, features = ["clone-impls", "derive", "parsing", "print
 [dev-dependencies]
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+trybuild = { workspace = true }
 # 测试中宏展开引用 ::i18n_dict::DictKey trait(dev-dependency 循环是允许的)
 i18n-dict = { path = "../i18n-dict" }

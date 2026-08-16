@@ -1,0 +1,5 @@
+error: 变体名 `COUNT` 与生成的关联项同名,请改名; 如需保留该键名,可加 #[serde(rename = "COUNT")] 解耦
+ --> tests/ui/dictkey_reserved_variant_name.rs:5:5
+  |
+5 |     COUNT,
+  |     ^^^^^

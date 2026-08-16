@@ -1,0 +1,5 @@
+error: DictKey 变体必须是无字段(unit)变体
+ --> tests/ui/derive_dict_key_named_field_variant.rs:5:5
+  |
+5 |     A(i32),
+  |     ^^^^^^

@@ -1,0 +1,5 @@
+error: dictkey 变体不能写显式判别值;判别值 = 字母序位置,由宏决定
+ --> tests/ui/dictkey_explicit_discriminant.rs:5:5
+  |
+5 |     A = 1,
+  |     ^^^^^

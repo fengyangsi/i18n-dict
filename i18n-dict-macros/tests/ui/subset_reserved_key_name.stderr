@@ -1,0 +1,5 @@
+error: 子集 key `VARIANTS` 与生成的 VARIANTS 常量同名,请改名; 如需保留该键名,可加 #[serde(rename = "VARIANTS")] 解耦
+ --> tests/ui/subset_reserved_key_name.rs:3:28
+  |
+3 | subset!(Dummy, Sub, Dummy::VARIANTS);
+  |                            ^^^^^^^^

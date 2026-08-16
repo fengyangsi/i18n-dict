@@ -1,0 +1,6 @@
+error: dictkey 变体不能带 #[cfg]:排序发生在 cfg 剔除之前,会错位
+ --> tests/ui/dictkey_cfg_variant.rs:5:5
+  |
+5 | /     #[cfg(feature = "x")]
+6 | |     A,
+  | |_____^

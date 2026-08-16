@@ -1,0 +1,5 @@
+error: 未知参数,仅支持无参标志 `sort` 与 `deserialize`
+ --> tests/ui/dictkey_unknown_argument.rs:3:11
+  |
+3 | #[dictkey(foo)]
+  |           ^^^
