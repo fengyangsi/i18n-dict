@@ -1,7 +1,54 @@
-//! `i18n-dict-macros`:词典宏 crate。
+//! `i18n-dict-macros`: procedural macros for i18n dictionaries.
 //!
-//! 生成 [`DictKey`](https://docs.rs/i18n-dict) trait 的实现
-//! (以及可选的 `serde::Deserialize`),提供四个宏:
+//! Generates implementations of the
+//! [`DictKey`](https://docs.rs/i18n-dict) trait (plus optional
+//! `serde::Deserialize`), providing four macros:
+//!
+//! - `#[dictkey]` — attribute macro: implements the trait, keeping
+//!   declaration order by default like the derive (discriminant =
+//!   declaration index); with `sort` variants are reordered
+//!   **alphabetically** (discriminant = alphabetical position); with
+//!   `deserialize` a deserialization impl is generated too
+//! - `#[derive(DictKey)]` — derive macro: implements the trait keeping
+//!   declaration order, discriminant = declaration index
+//! - `#[derive(DictKeyDeserialize)]` — deserialization impl (use with
+//!   `DictKey`; goes through the trait `find`, inheriting its lookup
+//!   strategy)
+//! - `subset!(dict, name, dict::key1, dict::key2, ...)` — page subset
+//!   declaration
+//!
+//! Both forms unconditionally generate `SORTED_KEYS` / `SORTED_VARIANTS`
+//! (alphabetical tables); beyond 16 variants a binary-search `find`
+//! override is generated (linear is faster for small tables, which use the
+//! trait default).
+//!
+//! Typical usage (pick one of the two forms):
+//!
+//! ```ignore
+//! use i18n_dict::{dictkey, DictKey, DictKeyDeserialize, subset};
+//!
+//! // Form A (recommended): #[dictkey] attribute, declaration order by
+//! // default; sort reorders alphabetically
+//! #[dictkey(sort, deserialize)]  // sort: alphabetical; deserialize: also generate Deserialize
+//! enum mydict { a, b, c }
+//!
+//! // Form B: #[derive(DictKey)] keeps declaration order, discriminant =
+//! // declaration index
+//! #[derive(DictKey, DictKeyDeserialize)]
+//! enum other { a, b, c }
+//!
+//! subset!(mydict, mysub, mydict::b, mydict::c);
+//! ```
+//!
+//! All macro expansions are pure std code and do not depend on the runtime
+//! crate (serde-related macros require the user to depend on serde
+//! directly).
+//!
+//! ---
+//!
+//! 中文说明:`i18n-dict-macros` 是词典宏 crate,生成
+//! [`DictKey`](https://docs.rs/i18n-dict) trait 的实现(以及可选的
+//! `serde::Deserialize`),提供四个宏:
 //!
 //! - `#[dictkey]` — 属性宏:实现 trait,默认与 derive 一致保留声明顺序
 //!   (判别值 = 声明顺序索引);参数 `sort` 时重排为**字母序**(判别值 =
@@ -14,24 +61,8 @@
 //!
 //! 两种形态都无条件生成 `SORTED_KEYS` / `SORTED_VARIANTS`(字母序表);
 //! 变体数 > 16 时生成 `find` 二分覆写(小表线性更快,走 trait 默认实现)。
-//!
-//! 典型用法(两种形态二选一):
-//!
-//! ```ignore
-//! use i18n_dict::{dictkey, DictKey, DictKeyDeserialize, subset};
-//!
-//! // 形态 A(推荐):#[dictkey] 属性宏,默认保留声明顺序;sort 重排为字母序
-//! #[dictkey(sort, deserialize)]  // sort:重排为字母序;deserialize:同时生成 Deserialize
-//! enum mydict { a, b, c }
-//!
-//! // 形态 B:#[derive(DictKey)] 保留声明顺序,判别值 = 声明顺序索引
-//! #[derive(DictKey, DictKeyDeserialize)]
-//! enum other { a, b, c }
-//!
-//! subset!(mydict, mysub, mydict::b, mydict::c);
-//! ```
-//!
-//! 宏展开均为纯 std 代码,不依赖运行时 crate(serde 相关宏需用户自行依赖 serde)。
+//! 宏展开均为纯 std 代码,不依赖运行时 crate(serde 相关宏需用户自行依赖
+//! serde)。
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -111,35 +142,58 @@ fn deserialize_impl(name: &Ident) -> proc_macro2::TokenStream {
 // #[dictkey] 属性宏
 // ===========================================================================
 
-/// 属性宏:实现 [`DictKey`](https://docs.rs/i18n-dict) trait。
+/// Attribute macro: implements the
+/// [`DictKey`](https://docs.rs/i18n-dict) trait.
 ///
-/// **默认保留声明顺序**(与 `#[derive(DictKey)]` 一致),判别值 = 声明顺序索引;
-/// 参数 `sort` 时重排变体为**字母序**,判别值 = 字母序位置
-/// (只依赖键名集合,与声明顺序无关)。
+/// **Keeps declaration order by default** (same as `#[derive(DictKey)]`),
+/// discriminant = declaration index; with `sort` variants are reordered
+/// **alphabetically**, discriminant = alphabetical position (depends only
+/// on the key-name set, not on declaration order).
 ///
-/// 两种模式都无条件生成 `SORTED_KEYS` / `SORTED_VARIANTS`(字母序表;
-/// sort 模式下与 `KEYS` / `VARIANTS` 同内容)。变体数 > 16 时自动生成
-/// `find` 二分覆写(基于 `SORTED_KEYS`,小表线性更快,用 trait 默认实现)。
+/// Both modes unconditionally generate `SORTED_KEYS` / `SORTED_VARIANTS`
+/// (alphabetical tables; identical to `KEYS` / `VARIANTS` in sort mode).
+/// Beyond 16 variants a binary-search `find` override is generated (based
+/// on `SORTED_KEYS`; linear is faster for small tables, which use the
+/// trait default).
 ///
-/// 参数(可选,逗号分隔、顺序任意):`#[dictkey(sort, deserialize)]`
-/// - `sort`:变体重排为字母序(默认保留声明顺序)
-/// - `deserialize`:同时生成反序列化实现(需用户直接依赖 serde)
+/// Arguments (optional, comma-separated, any order):
+/// `#[dictkey(sort, deserialize)]`
+/// - `sort`: reorder variants alphabetically (default: declaration order)
+/// - `deserialize`: also generate a deserialization impl (requires the
+///   user to depend on serde directly)
 ///
-/// 组合说明:本宏**不带** `deserialize` 时,可另行
-/// `#[derive(DictKeyDeserialize)]` 生成反序列化(功能等价于自带 `deserialize`);
-/// 带 `deserialize` 时**不要**再 derive 它,会重复实现 serde(E0119)。
-/// 与 `#[derive(DictKey)]` 二选一,不可混用(重复实现 trait)。
+/// Combinatorics: without `deserialize` you may additionally
+/// `#[derive(DictKeyDeserialize)]` (functionally equivalent to the
+/// built-in `deserialize`); with `deserialize` do **not** derive it again
+/// (duplicate serde impl, E0119). Mutually exclusive with
+/// `#[derive(DictKey)]` (duplicate trait impl).
 ///
-/// 限制:
-/// - 变体必须是无字段(unit)变体
-/// - 不能写显式判别值(`= n`),判别值由宏决定
-/// - 变体不能带 `#[cfg]` / `#[cfg_attr]`(宏展开先于 cfg 剔除,会错位)
-/// - enum 需 `Copy`(trait 要求),请同时 `#[derive(Clone, Copy)]`
+/// Restrictions:
+/// - variants must be unit (field-less)
+/// - explicit discriminants (`= n`) are not allowed — the macro owns them
+/// - variants cannot carry `#[cfg]` / `#[cfg_attr]` (expansion precedes
+///   cfg stripping; positions would shift)
+/// - the enum must be `Copy` (trait requirement); derive `Clone, Copy`
 ///
 /// ```ignore
 /// #[dictkey(sort, deserialize)]
-/// enum mydict { welcome_title, welcome_body, footer }  // sort 时展开为字母序
+/// enum mydict { welcome_title, welcome_body, footer }  // sorted alphabetically
 /// ```
+///
+/// 中文:属性宏,实现 [`DictKey`](https://docs.rs/i18n-dict) trait。**默认保留
+/// 声明顺序**(与 `#[derive(DictKey)]` 一致),判别值 = 声明顺序索引;参数
+/// `sort` 时重排变体为**字母序**,判别值 = 字母序位置(只依赖键名集合,与
+/// 声明顺序无关)。两种模式都无条件生成 `SORTED_KEYS` / `SORTED_VARIANTS`
+/// (字母序表;sort 模式下与 `KEYS` / `VARIANTS` 同内容)。变体数 > 16 时
+/// 自动生成 `find` 二分覆写(基于 `SORTED_KEYS`,小表线性更快,用 trait
+/// 默认实现)。参数(可选,逗号分隔、顺序任意):`sort`(重排为字母序)、
+/// `deserialize`(同时生成反序列化实现,需用户直接依赖 serde)。组合说明:
+/// 本宏**不带** `deserialize` 时,可另行 `#[derive(DictKeyDeserialize)]`
+/// (功能等价);带 `deserialize` 时**不要**再 derive 它(会重复实现 serde,
+/// E0119);与 `#[derive(DictKey)]` 二选一,不可混用。限制:变体必须是无
+/// 字段(unit)变体;不能写显式判别值(`= n`);变体不能带 `#[cfg]` /
+/// `#[cfg_attr]`(宏展开先于 cfg 剔除,会错位);enum 需 `Copy`,请同时
+/// `#[derive(Clone, Copy)]`。
 #[proc_macro_attribute]
 pub fn dictkey(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr = parse_macro_input!(attr as DictKeyAttr);
@@ -318,25 +372,42 @@ impl Parse for DictKeyAttr {
 // #[derive(DictKey)]
 // ===========================================================================
 
-/// derive 宏:保留声明顺序,实现 [`DictKey`](https://docs.rs/i18n-dict) trait,
-/// 判别值 = 声明顺序索引(与 full 词典数组下标一致)。
+/// Derive macro: implements the
+/// [`DictKey`](https://docs.rs/i18n-dict) trait keeping declaration order,
+/// discriminant = declaration index (same as the full-dictionary array
+/// index).
 ///
-/// 无条件生成 `SORTED_KEYS` / `SORTED_VARIANTS`(字母序表,二分查找专用);
-/// 变体数 > 16 时自动生成 `find` 二分覆写(基于排序表,查找从 O(n) 降为
-/// O(log n));小表(≤ 16)走 trait 默认线性实现(数量少时线性更快,
-/// 与 CPU 缓存/流水线有关)。
+/// Unconditionally generates `SORTED_KEYS` / `SORTED_VARIANTS`
+/// (alphabetical tables for binary search); beyond 16 variants a
+/// binary-search `find` override is generated (O(log n) instead of O(n));
+/// small tables (≤ 16) use the trait's default linear implementation
+/// (linear is faster at small sizes, due to CPU caches/pipelining).
 ///
-/// 反序列化搭配 `#[derive(DictKeyDeserialize)]`,走 trait `find`
-/// (自动继承这里的二分策略),零额外表。
+/// Pair with `#[derive(DictKeyDeserialize)]` for deserialization — it goes
+/// through the trait `find` (inheriting the binary-search strategy), no
+/// extra tables.
 ///
-/// 与 `#[dictkey]` 二选一:本宏不改动变体顺序;如需字母序判别值请用
-/// `#[dictkey(sort)]`。
+/// Mutually exclusive with `#[dictkey]`: this macro never reorders
+/// variants; use `#[dictkey(sort)]` for alphabetical discriminants.
 ///
-/// enum 需 `Copy`(trait 要求),请同时 `#[derive(Clone, Copy)]`。
+/// The enum must be `Copy` (trait requirement); derive `Clone, Copy`.
 ///
-/// 变体名**原样**作为键名字符串,不强制大小写;
-/// 建议搭配 `#[serde(rename_all = "snake_case")]`,
-/// 键名与语言文件的一致性由调用方保证。
+/// Variant names are used **verbatim** as key-name strings, no case
+/// forcing; consider `#[serde(rename_all = "snake_case")]` alongside —
+/// consistency between key names and language files is the caller's
+/// responsibility.
+///
+/// 中文:derive 宏,保留声明顺序实现 [`DictKey`](https://docs.rs/i18n-dict)
+/// trait,判别值 = 声明顺序索引(与 full 词典数组下标一致)。无条件生成
+/// `SORTED_KEYS` / `SORTED_VARIANTS`(字母序表,二分查找专用);变体数 > 16
+/// 时自动生成 `find` 二分覆写(查找从 O(n) 降为 O(log n));小表(≤ 16)走
+/// trait 默认线性实现(数量少时线性更快,与 CPU 缓存/流水线有关)。反序列化
+/// 搭配 `#[derive(DictKeyDeserialize)]`,走 trait `find`(自动继承这里的二分
+/// 策略),零额外表。与 `#[dictkey]` 二选一:本宏不改动变体顺序;如需字母序
+/// 判别值请用 `#[dictkey(sort)]`。enum 需 `Copy`(trait 要求),请同时
+/// `#[derive(Clone, Copy)]`。变体名**原样**作为键名字符串,不强制大小写;
+/// 建议搭配 `#[serde(rename_all = "snake_case")]`,键名与语言文件的一致性
+/// 由调用方保证。
 #[proc_macro_derive(DictKey)]
 pub fn derive_dict_key(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -433,25 +504,39 @@ pub fn derive_dict_key(input: TokenStream) -> TokenStream {
 // #[derive(DictKeyDeserialize)]
 // ===========================================================================
 
-/// 反序列化派生宏:与 `#[derive(DictKey)]` 搭配使用,为 enum 生成
-/// `serde::Deserialize` 实现。
+/// Deserialization derive: use with `#[derive(DictKey)]` to generate a
+/// `serde::Deserialize` impl for the enum.
 ///
-/// 统一走 trait `find`(键名 → 变体值),自动继承
-/// `DictKey` 的查找策略:大表二分、小表线性,零附加表。
-/// 需用户直接依赖 serde;不写本宏(或 `#[dictkey]` 不带 `deserialize`
-/// 参数)则不生成任何 serde 代码,不依赖 serde 也能编译。
+/// Goes through the trait `find` (key name → variant), automatically
+/// inheriting the `DictKey` lookup strategy: binary search for large
+/// tables, linear for small ones — zero extra tables. Requires the user
+/// to depend on serde directly; without this macro (or `deserialize` on
+/// `#[dictkey]`) no serde code is generated and the crate compiles without
+/// serde.
 ///
 /// ```ignore
 /// #[derive(DictKey, DictKeyDeserialize)]
 /// enum Key { ... }
 /// ```
 ///
-/// 组合说明:与 `#[derive(DictKey)]` 搭配是标准用法;`#[dictkey]` 形态
-/// 下,仅当本宏**不带** `deserialize` 参数时才可搭配本宏(功能等价于
-/// 自带 `deserialize`);`#[dictkey(deserialize)]` 与本宏混用会重复实现
-/// serde(编译错误)。也不要再同时 `#[derive(serde::Deserialize)]`。
-/// 本宏不检查 DictKey 是否已实现——未实现时展开代码引用 `find`
-/// 会编译报错。
+/// Combinatorics: the standard pairing is with `#[derive(DictKey)]`; under
+/// the `#[dictkey]` form it can only be added when the attribute does
+/// **not** carry `deserialize` (functionally equivalent to the built-in
+/// one); mixing `#[dictkey(deserialize)]` with this macro duplicates the
+/// serde impl (compile error). Do not also `#[derive(serde::Deserialize)]`.
+/// This macro does not check that `DictKey` is implemented — if it is not,
+/// the expanded code referencing `find` fails to compile.
+///
+/// 中文:反序列化派生宏,与 `#[derive(DictKey)]` 搭配使用,为 enum 生成
+/// `serde::Deserialize` 实现。统一走 trait `find`(键名 → 变体值),自动继承
+/// `DictKey` 的查找策略:大表二分、小表线性,零附加表。需用户直接依赖
+/// serde;不写本宏(或 `#[dictkey]` 不带 `deserialize` 参数)则不生成任何
+/// serde 代码,不依赖 serde 也能编译。组合说明:与 `#[derive(DictKey)]`
+/// 搭配是标准用法;`#[dictkey]` 形态下,仅当本宏**不带** `deserialize`
+/// 参数时才可搭配本宏(功能等价于自带 `deserialize`);
+/// `#[dictkey(deserialize)]` 与本宏混用会重复实现 serde(编译错误)。也不要
+/// 再同时 `#[derive(serde::Deserialize)]`。本宏不检查 DictKey 是否已实现
+/// ——未实现时展开代码引用 `find` 会编译报错。
 #[proc_macro_derive(DictKeyDeserialize)]
 pub fn derive_dict_key_deserialize(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -510,20 +595,24 @@ impl Parse for SubsetInput {
     }
 }
 
-/// 页面子集声明宏:模块级声明页面用到的 key,一次生成
-/// - `{Name}`:**enum**,每 key 一个 unit 变体,判别值 = 子集内位置
-///   (`{Name}::{key} as usize` 取位置,渲染直接寻址;
-///   调整声明顺序自动重映射,寻址处名字不变,零错位风险)
-/// - `{Name}::VARIANTS`:子集变体数组(`dict.get_sub` 拉取用;顺序 = 声明顺序)
+/// Page-subset declaration macro: declares the keys a page uses, in one go:
+/// - `{Name}`: an **enum** with one unit variant per key; discriminant =
+///   position within the subset (`{Name}::{key} as usize` gives the
+///   position for direct render addressing; reordering the declaration
+///   remaps automatically — addressing code keeps its names, zero
+///   misalignment risk)
+/// - `{Name}::VARIANTS`: the subset variant array (fed to `dict.get_sub`;
+///   order = declaration order)
 ///
-/// 全局下标无需生成:`{Dict}::{key} as usize` 即判别值,
-/// 按下标访问自定义容器时直接取。
+/// Global indices need no generation: `{Dict}::{key} as usize` is the
+/// discriminant — take it directly when indexing a custom container.
 ///
-/// 仅限**已实现 `DictKey` trait** 的 enum(dict enum 必须用
-/// `#[dictkey]` 或 `#[derive(DictKey)]` 定义);未实现时生成代码中的
-/// trait bound 断言会让 rustc 直接编译报错。
+/// Only for enums that **implement the `DictKey` trait** (define the dict
+/// enum with `#[dictkey]` or `#[derive(DictKey)]`); otherwise the
+/// trait-bound assertion in the generated code makes rustc reject the
+/// build.
 ///
-/// 用法:
+/// Usage:
 /// ```ignore
 /// use i18n_dict::{dictkey, subset};
 ///
@@ -532,13 +621,24 @@ impl Parse for SubsetInput {
 ///
 /// subset!(mydict, mysub, mydict::c, mydict::b);
 ///
-/// // 子集内位置(enum 判别值 = 子集内索引,与全局索引无关):
+/// // position within the subset (discriminant = subset index, unrelated
+/// // to the global index):
 /// let pos = mysub::c as usize;  // 0
-/// // 子集变体数组(dict.get_sub 按此拉取,顺序 = 声明顺序):
+/// // subset variant array (dict.get_sub fetches by this; order =
+/// // declaration order):
 /// let keys = mysub::VARIANTS;   // [mydict::c, mydict::b]
-/// // 全局下标 = dict 判别值,需要时直接取:
+/// // global index = dict discriminant, take it directly when needed:
 /// let idx = mydict::c as usize; // 2
 /// ```
+///
+/// 中文:页面子集声明宏,模块级声明页面用到的 key,一次生成 `{Name}` 枚举
+/// (每 key 一个 unit 变体,判别值 = 子集内位置,`{Name}::{key} as usize`
+/// 取位置,渲染直接寻址;调整声明顺序自动重映射,寻址处名字不变,零错位
+/// 风险)与 `{Name}::VARIANTS` 子集变体数组(`dict.get_sub` 拉取用;顺序 =
+/// 声明顺序)。全局下标无需生成:`{Dict}::{key} as usize` 即判别值,按下标
+/// 访问自定义容器时直接取。仅限**已实现 `DictKey` trait** 的 enum(dict
+/// enum 必须用 `#[dictkey]` 或 `#[derive(DictKey)]` 定义);未实现时生成
+/// 代码中的 trait bound 断言会让 rustc 直接编译报错。
 #[proc_macro]
 pub fn subset(input: TokenStream) -> TokenStream {
     let SubsetInput { dict, name, keys } = parse_macro_input!(input as SubsetInput);

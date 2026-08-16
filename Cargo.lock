@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "i18n-dict"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "i18n-dict",
  "i18n-dict-macros",
@@ -14,7 +14,7 @@ dependencies = [
 
 [[package]]
 name = "i18n-dict-macros"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "i18n-dict",
  "proc-macro2",
